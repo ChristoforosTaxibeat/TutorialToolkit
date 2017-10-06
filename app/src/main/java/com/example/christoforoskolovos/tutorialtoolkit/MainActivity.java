@@ -1,52 +1,55 @@
 package com.example.christoforoskolovos.tutorialtoolkit;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity {
+import com.example.viewmagnifier.Magnifier;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.fab).setOnClickListener(this);
+        findViewById(R.id.view1).setOnClickListener(this);
+        findViewById(R.id.view2).setOnClickListener(this);
+        findViewById(R.id.view3).setOnClickListener(this);
+        findViewById(R.id.view4).setOnClickListener(this);
+        findViewById(R.id.parent).setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onClick(final View view) {
+        float scale = 2f;
+        if (view.getId() == R.id.parent || view.getId() == R.id.view4)
+            scale = 0.5f;
+
+        Magnifier mag = new Magnifier(MainActivity.this, view, scale, "Lorem ipsum dolor sit amet, pri saperet adipisci convenire et, vel stet paulo populo id.");
+        mag.setStateListener(new Magnifier.stateListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onExpandStarted() {
+                view.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onExpandEnded() {
+
+            }
+
+            @Override
+            public void onMinimizeStarted() {
+
+            }
+
+            @Override
+            public void onMinimizeEnded() {
+                view.setVisibility(View.VISIBLE);
             }
         });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        mag.show();
     }
 }
