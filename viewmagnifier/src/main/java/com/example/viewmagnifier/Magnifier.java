@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.OvershootInterpolator;
@@ -31,7 +33,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
     String text;
     int min_width, min_height, min_center_left, min_center_top, max_center_left, max_center_top,
             max_width, max_height, screen_width, screen_height;
-    float min_scaleX, min_scaleY, max_scaleX, max_scaleY, min_translationX, min_translationY,
+    float scale, min_translationX, min_translationY,
             max_translationX, max_translationY, max_background_alpha, min_background_alpha,
             max_textView_alpha, min_textView_alpha, dX, dY;
     boolean closeAnimationCompleted;
@@ -52,20 +54,18 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
         this.context = context;
         this.targetView = targetView;
         this.text = text;
-        max_scaleX = scale;
-        max_scaleY = scale;
+        this.scale = scale;
 
         initViews();
 
         setView();
-
-        setText();
 
         viewContainer.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
                 viewContainer.getViewTreeObserver().removeOnPreDrawListener(this);
                 setBasicMeasurementVariables();
+                setText();
                 expand();
                 return true;
             }
@@ -73,23 +73,13 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
     }
 
     private void setView() {
-        final float originalScaleX = targetView.getScaleX();
-        final float originalScaleY = targetView.getScaleY();
-
         targetView.setDrawingCacheEnabled(true);
         Bitmap bitmap = targetView.getDrawingCache();
         viewContainer.setImageBitmap(bitmap);
-
-        targetView.setScaleX(originalScaleX);
-        targetView.setScaleY(originalScaleY);
     }
 
     private void setText() {
         textView.setText(text);
-
-//// TODO: 06/10/2017 set dynamic padding based on scale difference in order to be equal with 20dp top padding in normal scale
-//        textView.setPadding(0, (int) ((ViewUtils.dpToPx(targetView.getResources(), 20) * min_scaleX)) / 2, 0, 0);
-//        Log.i("Test", "Padding: " + (int) ((ViewUtils.dpToPx(targetView.getResources(), 20) * min_scaleX)) / 2);
     }
 
     private void initViews() {
@@ -122,17 +112,15 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
         min_width = targetView.getMeasuredWidth();
         min_height = targetView.getMeasuredHeight();
 
-        max_width = viewContainer.getMeasuredWidth();
-        max_height = viewContainer.getMeasuredHeight();
+        max_width = (int) (min_width * scale);
+        max_height = (int) (min_height * scale);
 
-        min_center_left = ViewUtils.getLocationOnScreen(targetView)[0] + min_width / 2;
-        min_center_top = ViewUtils.getLocationOnScreen(targetView)[1] + min_height / 2;
+        min_center_left = ViewUtils.getLocationOnScreen(targetView)[0] + max_width / 2;
+        min_center_top = ViewUtils.getLocationOnScreen(targetView)[1] + max_height / 2;
 
         max_center_left = ViewUtils.getLocationOnScreen(viewContainer)[0] + max_width / 2;
         max_center_top = ViewUtils.getLocationOnScreen(viewContainer)[1] + max_height / 2;
 
-        min_scaleX = (float) min_width / (float) max_width;
-        min_scaleY = (float) min_height / (float) max_height;
 
         min_translationX = (min_center_left - max_center_left);
         min_translationY = (min_center_top - max_center_top);
@@ -157,13 +145,37 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             }
         }).start(10);
 
-        ObjectAnimator imageViewAnimator = ObjectAnimator.ofPropertyValuesHolder(viewContainer,
-                PropertyValuesHolder.ofFloat(View.SCALE_X, min_scaleX, max_scaleX),
-                PropertyValuesHolder.ofFloat(View.SCALE_Y, min_scaleY, max_scaleY),
+        ValueAnimator widthAnimator = ValueAnimator.ofInt(min_width, max_width);
+        widthAnimator.setTarget(viewContainer);
+        widthAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        widthAnimator.setDuration(300);
+        widthAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
+                layoutparams.width = (int) valueAnimator.getAnimatedValue();
+                viewContainer.setLayoutParams(layoutparams );
+            }
+        });
+
+        ValueAnimator heightAnimator = ValueAnimator.ofInt(min_height, max_height);
+        heightAnimator.setTarget(viewContainer);
+        heightAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        heightAnimator.setDuration(300);
+        heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
+                layoutparams.height = (int) valueAnimator.getAnimatedValue();
+                viewContainer.setLayoutParams(layoutparams );
+            }
+        });
+
+        ObjectAnimator translationAnimator = ObjectAnimator.ofPropertyValuesHolder(viewContainer,
                 PropertyValuesHolder.ofFloat(View.TRANSLATION_X, min_translationX, max_translationX),
                 PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, min_translationY, max_translationY));
-        imageViewAnimator.setInterpolator(new FastOutSlowInInterpolator());
-        imageViewAnimator.setDuration(300);
+        translationAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        translationAnimator.setDuration(300);
 
         ObjectAnimator fadeInBackground = ObjectAnimator.ofFloat(
                 background, "alpha", min_background_alpha, max_background_alpha);
@@ -174,7 +186,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
         fadeInTextView.setDuration(300);
 
         AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(imageViewAnimator, fadeInBackground, fadeInTextView);
+        animatorSet.playTogether(widthAnimator, heightAnimator, translationAnimator, fadeInBackground, fadeInTextView);
 
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -195,13 +207,37 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
 
         closeAnimationCompleted = false;
 
-        ObjectAnimator imageViewAnimator = ObjectAnimator.ofPropertyValuesHolder(viewContainer,
-                PropertyValuesHolder.ofFloat(View.SCALE_X, min_scaleX),
-                PropertyValuesHolder.ofFloat(View.SCALE_Y, min_scaleY),
+        ValueAnimator widthAnimator = ValueAnimator.ofInt(max_width, min_width);
+        widthAnimator.setTarget(viewContainer);
+        widthAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        widthAnimator.setDuration(300);
+        widthAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
+                layoutparams.width = (int) valueAnimator.getAnimatedValue();
+                viewContainer.setLayoutParams(layoutparams );
+            }
+        });
+
+        ValueAnimator heightAnimator = ValueAnimator.ofInt(max_height, min_height);
+        heightAnimator.setTarget(viewContainer);
+        heightAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        heightAnimator.setDuration(300);
+        heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
+                layoutparams.height = (int) valueAnimator.getAnimatedValue();
+                viewContainer.setLayoutParams(layoutparams );
+            }
+        });
+
+        ObjectAnimator translationAnimator = ObjectAnimator.ofPropertyValuesHolder(viewContainer,
                 PropertyValuesHolder.ofFloat(View.TRANSLATION_X, min_translationX),
                 PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, min_translationY));
-        imageViewAnimator.setInterpolator(new FastOutSlowInInterpolator());
-        imageViewAnimator.setDuration(200);
+        translationAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        translationAnimator.setDuration(200);
 
         ObjectAnimator fadeOutBackground = ObjectAnimator.ofFloat(
                 background, View.ALPHA, min_background_alpha);
@@ -212,7 +248,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
         fadeOutTextView.setDuration(200);
 
         AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.playTogether(imageViewAnimator, fadeOutBackground, fadeOutTextView);
+        animatorSet.playTogether(widthAnimator, heightAnimator, translationAnimator, fadeOutBackground, fadeOutTextView);
 
         new FutureTask(new FutureTask.OnTaskRunListener() {
             @Override
@@ -220,7 +256,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
                 if (stateListener != null)
                     stateListener.onMinimizeEnded();
             }
-        }).start(imageViewAnimator.getDuration() - 10);
+        }).start(translationAnimator.getDuration() - 10);
 
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
