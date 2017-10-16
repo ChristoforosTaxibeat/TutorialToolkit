@@ -39,6 +39,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
     boolean closeAnimationCompleted;
     boolean dismissGestureDetected;
     boolean instantDismissRequested;
+    boolean dismissInProgress;
     stateListener stateListener;
 
     ConstraintLayout mainContainer;
@@ -96,12 +97,9 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
         this.setContentView(R.layout.magnifier);
 
         mainContainer = findViewById(R.id.mainContainer);
-        mainContainer.setOnClickListener(this);
         viewContainer = findViewById(R.id.viewContainer);
-        viewContainer.setOnTouchListener(this);
         background = findViewById(R.id.backgroundLayer);
         textView = findViewById(R.id.textView);
-
     }
 
     private void setBasicMeasurementVariables() {
@@ -154,7 +152,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
                 layoutparams.width = (int) valueAnimator.getAnimatedValue();
-                viewContainer.setLayoutParams(layoutparams );
+                viewContainer.setLayoutParams(layoutparams);
             }
         });
 
@@ -167,7 +165,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
                 layoutparams.height = (int) valueAnimator.getAnimatedValue();
-                viewContainer.setLayoutParams(layoutparams );
+                viewContainer.setLayoutParams(layoutparams);
             }
         });
 
@@ -192,8 +190,11 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if (stateListener != null)
+                if (stateListener != null) {
                     stateListener.onExpandEnded();
+                    mainContainer.setOnClickListener(Magnifier.this);
+                    viewContainer.setOnTouchListener(Magnifier.this);
+                }
             }
         });
 
@@ -216,7 +217,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
                 layoutparams.width = (int) valueAnimator.getAnimatedValue();
-                viewContainer.setLayoutParams(layoutparams );
+                viewContainer.setLayoutParams(layoutparams);
             }
         });
 
@@ -229,7 +230,7 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 ViewGroup.LayoutParams layoutparams = viewContainer.getLayoutParams();
                 layoutparams.height = (int) valueAnimator.getAnimatedValue();
-                viewContainer.setLayoutParams(layoutparams );
+                viewContainer.setLayoutParams(layoutparams);
             }
         });
 
@@ -348,7 +349,8 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == mainContainer.getId()) {
+        if (v.getId() == mainContainer.getId() & !dismissInProgress) {
+            dismissInProgress = true;
             dismiss();
         }
     }
@@ -356,7 +358,6 @@ public class Magnifier extends Dialog implements View.OnClickListener, View.OnTo
     @Override
     public void dismiss() {
         if (closeAnimationCompleted || instantDismissRequested) {
-            targetView.setDrawingCacheEnabled(false);
             super.dismiss();
         } else {
             minimize();

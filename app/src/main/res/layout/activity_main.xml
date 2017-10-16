@@ -39,13 +39,14 @@
         android:layout_gravity="center"
         android:textColor="#00ff2a"/>
 
-    <Button
+    <TextView
         android:id="@+id/view4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="45dp"
-        android:text="BIIIIIIIIIIIIGER TEST"
+        android:text="BIIIIIIIGER TEST"
         android:layout_gravity="top|right"
-        android:textSize="30dp"/>
+        android:textSize="30dp"
+        android:textColor="#00ff2a"/>
 
 </android.support.design.widget.CoordinatorLayout>

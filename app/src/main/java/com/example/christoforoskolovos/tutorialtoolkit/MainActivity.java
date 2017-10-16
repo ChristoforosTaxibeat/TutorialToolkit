@@ -1,5 +1,6 @@
 package com.example.christoforoskolovos.tutorialtoolkit;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -50,6 +51,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onMinimizeEnded() {
                 view.setVisibility(View.VISIBLE);
+            }
+        });
+
+        mag.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+
+            }
+        });
+        mag.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+
             }
         });
         mag.show();
