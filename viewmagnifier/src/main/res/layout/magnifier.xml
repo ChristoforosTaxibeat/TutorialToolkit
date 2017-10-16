@@ -24,19 +24,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:scaleType="centerCrop"
-        android:src="#fff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_height="100dp"
-        tools:layout_width="100dp" />
+        tools:background="#fff"
+        tools:layout_height="5dp"
+        tools:layout_width="5dp" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginLeft="16dp"
         android:gravity="center"
         android:textColor="#fff"
         app:layout_constraintEnd_toEndOf="parent"

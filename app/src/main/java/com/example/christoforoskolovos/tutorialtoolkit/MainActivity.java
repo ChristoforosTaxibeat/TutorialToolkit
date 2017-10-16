@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         float scale = 2f;
         if (view.getId() == R.id.parent || view.getId() == R.id.view4)
             scale = 0.5f;
+        else if( view.getId() == R.id.view2)
+            scale = 3f;
 
         Magnifier mag = new Magnifier(MainActivity.this, view, scale, "Lorem ipsum dolor sit amet, pri saperet adipisci convenire et, vel stet paulo populo id.");
         mag.setStateListener(new Magnifier.stateListener() {
